@@ -1,24 +1,17 @@
 <?php
-    namespace Cep\Model;
-    
-    class Cep{
-        private int $idCep;
-        private string $cep;
-        private string $ufCep;
-        private string $bairroCep;
-        private string $estadoCep;
-        private string $dataCep;
-        private int $idUsuario;
+    require "../Model/Connection.php";
 
-        public function __construct($idCep, $cep, $ufCep, $bairroCep, $estadoCep, $dataCep, $idUsuario){
-            $this->idCep = $idCep;
-            $this->cep = $cep;
-            $this->ufCep = $ufCep;
-            $this->bairroCep = $bairroCep;
-            $this->estadoCep = $estadoCep;
-            $this->dataCep = $dataCep;
-            $this->idUsuario = $idUsuario;
-        }
+    class Cep extends Connection{
+        private $idCep;
+        private $cep;
+        private $ufCep;
+        private $bairroCep;
+        private $estadoCep;
+        private $cidadeCep;
+        private $dataCep;
+        private $latitudeCep;
+        private $longitudeCep;
+        private $idUsuario;
 
         public function get($var){
             return $this->$var;
@@ -27,8 +20,81 @@
         public function set($var, $value){
             $this->$var = $value;
         }
-    }
 
-    $cep = new Cep(1, "15002500", "SP", "Bairroteste", "São Paulo", "2025-12-03", 1);
-    $cep->set("idCep", 21);
-    echo $cep->get("idCep");
+        public function getJSON(){
+            $options = array(
+                CURLOPT_URL => "https://viacep.com.br/ws/$this->cep/json/",
+                CURLOPT_RETURNTRANSFER => true
+            );
+            $ci = curl_init();
+            curl_setopt_array($ci, $options);
+
+            $response = curl_exec($ci);
+            curl_close($ci);
+
+            return json_decode($response);
+        }
+
+        public function insertCep(){
+            $query = "INSERT INTO cep (cep, ufCep, bairroCep, cidadeCep, estadoCep, idUsuario, latitudeCep, longitudeCep) 
+                      VALUES (:cep, :ufCep, :bairroCep, :cidadeCep, :estadoCep, :idUsuario, :latitudeCep, :longitudeCep);";
+
+            $stmt = $this->conn->prepare($query);
+
+            $stmt->bindValue(":cep", $this->cep);
+            $stmt->bindValue(":ufCep", $this->ufCep);
+            $stmt->bindValue(":bairroCep", $this->bairroCep);
+            $stmt->bindValue(":cidadeCep", $this->cidadeCep);
+            $stmt->bindValue(":estadoCep", $this->estadoCep);
+            $stmt->bindValue(":idUsuario", $this->idUsuario);
+            $stmt->bindValue(":latitudeCep", $this->latitudeCep);
+            $stmt->bindValue(":longitudeCep", $this->longitudeCep);
+
+            $stmt->execute();
+        }
+
+        public function updateCepDate(){
+            $query = "UPDATE cep set dataCep = current_timestamp WHERE idCep = :idCep";
+
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindValue(":idCep", $this->idCep);
+            $stmt->execute();
+        }
+
+        public function selectAllUserCep(){
+            $query = "SELECT * FROM cep WHERE idUsuario = :idUsuario ORDER BY dataCep DESC";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindValue(":idUsuario", $this->idUsuario);
+
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_OBJ);
+        }
+
+        public function selectSearchedCep(){
+            $query = "SELECT * FROM cep WHERE cep = :cep AND idUsuario = :idUsuario";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindValue(":cep", $this->cep);
+            $stmt->bindValue(":idUsuario", $this->idUsuario);
+
+            $stmt->execute();
+            return $stmt->fetch(PDO::FETCH_OBJ);
+        }
+
+        public function getMapsInfo(){
+            $search = urlencode("$this->bairroCep $this->cidadeCep $this->ufCep");
+            $options = array(
+                CURLOPT_URL => "https://nominatim.openstreetmap.org/search?format=json&q=$search",
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_HTTPHEADER => [
+                    "User-Agent: searchCEP (ercapatti@gmail.com)"
+                ]
+            );
+            $ci = curl_init();
+            curl_setopt_array($ci, $options);
+        
+            $response = curl_exec($ci);
+            curl_close($ci);
+
+            return json_decode($response);
+        }
+    }
