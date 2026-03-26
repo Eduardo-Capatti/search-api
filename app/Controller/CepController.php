@@ -16,6 +16,15 @@
             $data = $cep->selectSearchedCep();
             $cepJSON = $cep->getJSON();
 
+            $cep->set("ufCep", $cepJSON->uf);
+            $cep->set("bairroCep", $cepJSON->bairro);
+            $cep->set("estadoCep", $cepJSON->estado);
+            $cep->set("cidadeCep", $cepJSON->localidade);
+            $cep->set("logradouroCep", $cepJSON->logradouro);
+            
+
+            $cepMaps = $cep->getMapsInfo();
+
             if(empty($data)){
             
                 if(!empty($cepJSON->erro) && $cepJSON->erro == true){
@@ -23,13 +32,6 @@
                     exit;
                 }
 
-                $cep->set("ufCep", $cepJSON->uf);
-                $cep->set("bairroCep", $cepJSON->bairro);
-                $cep->set("estadoCep", $cepJSON->estado);
-                $cep->set("cidadeCep", $cepJSON->localidade);
-                
-
-                $cepMaps = $cep->getMapsInfo();
                 $cep->set("latitudeCep", null);
                 $cep->set("longitudeCep", null);
                 if(!empty($cepMaps)){

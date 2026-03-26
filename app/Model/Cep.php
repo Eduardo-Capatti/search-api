@@ -8,6 +8,7 @@
         private $bairroCep;
         private $estadoCep;
         private $cidadeCep;
+        private $logradouroCep;
         private $dataCep;
         private $latitudeCep;
         private $longitudeCep;
@@ -36,8 +37,8 @@
         }
 
         public function insertCep(){
-            $query = "INSERT INTO cep (cep, ufCep, bairroCep, cidadeCep, estadoCep, idUsuario, latitudeCep, longitudeCep) 
-                      VALUES (:cep, :ufCep, :bairroCep, :cidadeCep, :estadoCep, :idUsuario, :latitudeCep, :longitudeCep);";
+            $query = "INSERT INTO cep (cep, ufCep, bairroCep, cidadeCep, estadoCep, logradouroCep, idUsuario, latitudeCep, longitudeCep) 
+                      VALUES (:cep, :ufCep, :bairroCep, :cidadeCep, :estadoCep, :logradouroCep, :idUsuario, :latitudeCep, :longitudeCep);";
 
             $stmt = $this->conn->prepare($query);
 
@@ -45,6 +46,7 @@
             $stmt->bindValue(":ufCep", $this->ufCep);
             $stmt->bindValue(":bairroCep", $this->bairroCep);
             $stmt->bindValue(":cidadeCep", $this->cidadeCep);
+            $stmt->bindValue(":logradouroCep", $this->logradouroCep);
             $stmt->bindValue(":estadoCep", $this->estadoCep);
             $stmt->bindValue(":idUsuario", $this->idUsuario);
             $stmt->bindValue(":latitudeCep", $this->latitudeCep);
@@ -81,12 +83,12 @@
         }
 
         public function getMapsInfo(){
-            $search = urlencode("$this->bairroCep $this->cidadeCep $this->ufCep");
+            $search = urlencode("$this->logradouroCep $this->cidadeCep $this->ufCep $this->estadoCep");
             $options = array(
                 CURLOPT_URL => "https://nominatim.openstreetmap.org/search?format=json&q=$search",
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_HTTPHEADER => [
-                    "User-Agent: searchCEP (ercapatti@gmail.com)"
+                    "User-Agent: searchCEP"
                 ]
             );
             $ci = curl_init();
